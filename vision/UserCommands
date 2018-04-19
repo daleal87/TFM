@@ -1,0 +1,14 @@
+COMANDO DE USO
+
+-- Simulated System --
+
+
+-- Real System --
+1. We launch the ardrone driver:
+	roslaunch vision ardrone_setup.launch
+
+2. We launch the joy node, ardrone_teleop node (for the joystick) and the aruco_single node (for tag detection)
+	roslaunch vision platform_detection_real.launch
+
+3. Finally, we launch the platform_tracking_real node:
+	roslaunch vision platform_tracking_real.launch

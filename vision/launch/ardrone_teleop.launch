@@ -1,0 +1,55 @@
+<?xml version="1.0"?>
+
+<launch>
+
+    <node name="joy_node" pkg="joy" type="joy_node" output="screen" clear_params="true">
+        <param name="dev" type="str" value="/dev/input/js1"/>
+    </node>
+    
+
+
+    <!-- We launch the joystick controller -->
+
+    <arg name="control_mode" default="twist" />
+    <node name="ardrone_teleop" pkg="vision" type="ardrone_teleop" output="screen" required="true">
+        <!-- Configures the joystick button mapping -->
+        <param name="control_mode" value="$(arg control_mode)" />
+        
+                                        <!-- IMPORTANT INFORMATION -->
+        <!-- Value of axis and buttons must be = ${THE ONE THAT INDICATES THE jstest-gtk APPLICATION} + 1 -->
+
+        <!-- AXIS -->
+        <param name="x_axis" value="2"/>
+        <param name="y_axis" value="1"/>
+        <param name="z_axis" value="4"/>
+        <param name="yaw_axis" value="3"/>
+
+        <!-- VELOCITY BUTTONS -->
+        <param name="x_velocity_max" value="5"/>
+        <param name="y_velocity_max" value="5"/>
+        <param name="z_velocity_max" value="2"/>
+        <param name="slow_button" value="6"/>
+
+        <!-- TASK BUTTONS -->
+        <!-- The comments refer to the SixAxis Controller (or PS3 Controller)--> 
+        <param name="takeoff_button"            value="13" /> <!-- TRIANGULE     Button -->
+        <param name="landing_button"            value="15" /> <!-- X             Button -->
+        <param name="emergency_button"          value="14" /> <!-- CIRCLE (O)    Button -->
+        <param name="reset_button"              value="4"  />
+        <param name="tracking_button"           value="16" />        
+        
+        <param name="togglecam_button"          value="17" /> <!-- PS            Button -->
+        <param name="flattrim_button"           value="1"  /> <!-- SELECT        Button -->
+
+        <!-- TOPICS -->
+        <param name="cmd_vel_topic"             value="/cmd_vel" />
+        <param name="takeoff_topic"             value="/ardrone/takeoff" />
+        <param name="landing_topic"             value="/ardrone/land" />
+        <param name="emergency_topic"           value="/ardrone/emergency_topic" />
+        <param name="reset_topic"               value="/ardrone/reset" />
+        <param name="tracking_topic"            value="/ardrone/tracking_topic" />
+
+        <param name="duration"                  value="0.5" />
+
+    </node>
+</launch>

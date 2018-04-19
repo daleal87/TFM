@@ -1,0 +1,66 @@
+    // --CENTROID-- //
+
+    //Find countours on the image
+    cv::findContours(img_negated, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cv::Point(0,0));
+
+    for (int i = 0; i < contours.size(); i++)
+    {
+        cv::approxPolyDP(cv::Mat(contours[i]), approx, cv::arcLength(cv::Mat(contours[i]), true)* 0.02, true);
+
+        
+        // if (       fabs(angle_x)                                     <= 0.5 && fabs(angular_velocity_x) <= 0.4 //angles limit 0.5
+        //         && fabs(angular_velocity_y)                          <= 0.4 && fabs(angle_y) <= 0.5
+        //         && fabs(linear_acceleration_x)                       <= 1   && fabs(linear_acceleration_y) <= 1
+        //         && fabs(linear_acceleration_x*linear_acceleration_y) <= 0.7
+        //         && fabs(angular_velocity_x)*fabs(angular_velocity_y) <= 0.25 //variation angular_velocity limit
+        //         && cv::isContourConvex(cv::Mat(approx))) {
+        
+            cv::Point pt;
+            for(int j=0;j<approx.size();j++)
+            {
+                //cv::Point point = approx[i];
+                //ROS_INFO("extracting points X %d Y %d",point.x, point.y);
+
+                if (j == approx.size()-1)
+                {
+                    cv::line(image, approx.at(j), approx.at(0), cv::Scalar(0,255,0), 4);
+                }
+                else
+                {
+                    cv::line(image, approx.at(j), approx.at(j+1), cv::Scalar(0,255,0), 4);
+                }
+            }
+
+            // Centroid extraction----------------------------------------------------------------
+            /// 1º Get the moments
+            cv::Moments m;
+            m = cv::moments( approx, false );
+
+            /// 2º Get the mass centers: (centroid)
+            cv::Point2f mc;
+            mc = cv::Point2f( m.m10/m.m00 , m.m01/m.m00 );
+            cv::line(image, mc, mc, cv::Scalar(0,255,255), 8); // we draw a yellow point for that mc
+
+            /// PINHOLE inverse transformation ==> (x,y,z)= f(u,v) without distortion, (u,v)=mc ---------------------
+            ROS_INFO("Centroid location");
+            geometry_msgs::PoseStamped centroid;
+                centroid.header.stamp= ros::Time::now();
+                centroid.header.seq = ros::Time::now().toSec();
+                centroid.header.frame_id = "/downward_cam_optical_frame";
+                centroid.pose.orientation.w=1;
+                centroid.pose.orientation.x=0;
+                centroid.pose.orientation.y=0;
+                centroid.pose.orientation.z=0;
+                
+                //Centroide corregido
+                centroid.pose.position.x=((mc.x - cx)*altitude_quadrotor - (T*(mc.y - cy)*altitude_quadrotor)/fy)/fx;
+                centroid.pose.position.y=(((mc.y - cy)*altitude_quadrotor)/fy);            
+                centroid.pose.position.z=altitude_quadrotor - altura_platform;          
+            
+            ROS_INFO("Centro de masas en pixels del objetivo: (%f , %f)", mc.x, mc.y);
+            ROS_INFO("La posicion del objetivo es: (%f , %f, %f) en metros respecto a la camara", centroid.pose.position.x, centroid.pose.position.y, centroid.pose.position.z);
+
+            platform_position_pub_.publish(centroid);
+        //} // end of if with tons of conditions
+
+    }

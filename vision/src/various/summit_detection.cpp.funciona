@@ -1,0 +1,325 @@
+#include <ros/ros.h>
+#include <image_transport/image_transport.h>
+#include <opencv/cv.h>
+#include <cv_bridge/cv_bridge.h>
+#include <sensor_msgs/image_encodings.h>
+#include "opencv2/imgproc/imgproc.hpp"
+#include "opencv2/highgui/highgui.hpp"
+#include <iostream>
+#include <stdio.h>
+#include <stdlib.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <sensor_msgs/Range.h>
+#include <sensor_msgs/CameraInfo.h>
+#include <sensor_msgs/Imu.h>
+
+#include <tf/transform_listener.h>
+
+#define DEFAULT_SIZE 0.64
+
+namespace enc = sensor_msgs::image_encodings;
+using namespace cv;
+using namespace std;
+
+static const char WINDOW[] = "Image Processed";
+static const char WINDOW_NAME_BLUR[] = "window_image_blur";
+static const char WINDOW_NAME_FINAL[] = "window_image_final";
+
+
+cv::Mat img_mask;
+cv::Mat img_hsv;
+
+cv::Mat image;
+
+
+
+
+int H_min = 0;
+int H_max = 179;
+int S_min = 0;
+int S_max = 196;
+int V_min = 0;
+int V_max = 170;
+
+int images_read = 0;
+int times_detected = 0;
+int false_positives = 0;
+int obj_detected = 0;
+
+// image Subscriber and Publisher
+image_transport::Subscriber image_sub_;
+image_transport::Publisher image_pub_;
+
+class Summit_Detection
+{
+  
+    // ROS PUBLISHERS
+    ros::Publisher summit_position_;
+
+    // ROS SUBSCRIBERS
+    ros::Subscriber camera_info_;
+    ros::Subscriber altitude_;
+    ros::Subscriber cam_info_;
+    ros::Subscriber imu_info_;
+
+    double fx;
+    double fy;
+    double cx;
+    double cy;
+    double T;
+    
+    double altitude;
+    
+    double angle_x;
+    double angular_velocity_x;
+    
+    double angle_y;
+    double angular_velocity_y;
+    
+    double linear_acceleration_x;
+    double linear_acceleration_y;
+
+    double teoric_size;
+
+    //VARIABLES FOR DRAWING THE LANDING_PLATFORM SHAPE
+    std::vector< std::vector<cv::Point> > contours;
+    std::vector<cv::Vec4i> hierarchy;
+    std::vector<cv::Point> approx;
+
+public:
+    Summit_Detection();
+    void height(const sensor_msgs::RangeConstPtr& hector_height);
+    void cam_info(const sensor_msgs::CameraInfo& cam_parameters);
+    void angle(const sensor_msgs::ImuConstPtr& hector_imu);
+    void colorDetectionCallback(const sensor_msgs::ImageConstPtr& original_image);
+
+    
+    
+}; //end of class Summit_Detection
+
+
+Summit_Detection::Summit_Detection()
+{
+    ROS_INFO("Init Class: Summit_Detection");
+    
+    ros::NodeHandle nh_;
+    image_transport::ImageTransport it_(nh_);
+    
+
+    std::string image_topic;
+    std::string summit_position_topic;
+    std::string altitude_topic;
+    std::string camera_info_topic;
+    std::string imu_topic;
+    
+    
+    
+
+    // GETTING ROS PARAMETERS
+    nh_.param("image_topic", image_topic, std::string("/ardrone/bottom/image_raw"));
+    nh_.param("cam_info_topic", camera_info_topic, std::string("/ardrone/bottom/camera_info"));
+    nh_.param("summit_position_topic", summit_position_topic, std::string("estimated_position"));
+    nh_.param("altitude_topic", altitude_topic, std::string("/sonar_height")); // /quadrotor/altimeter has less limitations
+    nh_.param("imu_topic", imu_topic, std::string("/ardrone/imu"));
+
+    nh_.param("H_min", H_min, 0);
+    nh_.param("H_max", H_max, 179);
+    nh_.param("S_min", S_min, 0);
+    nh_.param("S_max", S_max, 196);
+    nh_.param("V_min", V_min, 0);
+    nh_.param("V_max", V_max, 170);
+
+    nh_.param("teoric_size", teoric_size, DEFAULT_SIZE);
+
+
+    //TOPICS
+
+    //Subscribe to input video feed and publish output video feed
+    image_sub_ = it_.subscribe(image_topic, 1, &Summit_Detection::colorDetectionCallback, this);
+    image_pub_ = it_.advertise("/image_converter/output_video", 1);
+
+    //We subscribe to the ALTITUDE_TOPIC of the quadrotor
+    altitude_ = nh_.subscribe(altitude_topic, 1, &Summit_Detection::height, this);
+    
+    //We subscribe to the IMU_TOPIC of the quadrotor
+    imu_info_ = nh_.subscribe(imu_topic, 1, &Summit_Detection::angle, this);
+
+    //We subscribe to the CAMERA_INFO_TOPIC of the quadrotor
+    cam_info_ = nh_.subscribe(camera_info_topic, 1, &Summit_Detection::cam_info, this);
+
+    //We publish on the SUMMIT_POSITION_TOPIC 
+    summit_position_ = nh_.advertise<geometry_msgs::PoseStamped>(summit_position_topic, 1);
+
+    //TRACKBAR
+    cv::namedWindow("Ball");
+    cv::createTrackbar("H_min","Ball",&H_min,179,NULL);
+    cv::createTrackbar("H_max","Ball",&H_max,179,NULL);
+    cv::createTrackbar("S_min","Ball",&S_min,255,NULL);
+    cv::createTrackbar("S_max","Ball",&S_max,255,NULL);
+    cv::createTrackbar("V_min","Ball",&V_min,255,NULL);
+    cv::createTrackbar("V_max","Ball",&V_max,255,NULL);
+
+
+
+    ROS_INFO("Setup completed");
+
+
+
+
+}
+   
+
+void Summit_Detection::height(const sensor_msgs::RangeConstPtr& hector_height)
+{
+    altitude = hector_height -> range;
+
+    //Filtro paso banda
+    if(altitude > 6.5 || altitude < 5.5)
+    {
+         altitude = 6.0;
+    }
+}
+
+
+void Summit_Detection::angle(const sensor_msgs::ImuConstPtr& hector_imu)
+{
+
+  angle_x               = hector_imu->orientation.x;
+  angular_velocity_x    = hector_imu->angular_velocity.x;
+ 
+  angle_y               = hector_imu->orientation.y;
+  angular_velocity_y    = hector_imu->angular_velocity.y;
+ 
+  linear_acceleration_x = hector_imu->linear_acceleration.x;
+  linear_acceleration_y = hector_imu->linear_acceleration.y;
+
+}
+
+
+void Summit_Detection::cam_info(const sensor_msgs::CameraInfo& cam_parameters){
+    //ROS_INFO("Parameters from the pinhole model");
+    fx = cam_parameters.K.at(0);
+    fy = cam_parameters.K.at(4);
+    cx = cam_parameters.K.at(2);
+    cy = cam_parameters.K.at(5);
+    T  = cam_parameters.K.at(1);
+    //ROS_INFO("Los parametros son  (fx,fy)=(%f , %f)", fx, fy);
+}
+
+
+void Summit_Detection::colorDetectionCallback(const sensor_msgs::ImageConstPtr& original_image)
+{
+    //Convert from the ROS image message to a CvImage suitable for working with OpenCV for processing
+    cv_bridge::CvImagePtr cv_ptr;
+    try
+    {
+        cv_ptr = cv_bridge::toCvCopy(original_image, enc::BGR8);
+        image = cv_ptr->image;
+        images_read++;
+    }
+    catch (cv_bridge::Exception& e)
+    {
+        ROS_ERROR("Failed to convert image: %s", e.what());
+        return;
+    }
+
+    cv::Mat img_mask, img_hsv; 
+    cv::cvtColor(cv_ptr->image,img_hsv,CV_BGR2HSV);
+    cv::inRange(img_hsv,cv::Scalar(H_min,S_min,V_min),cv::Scalar(H_max,S_max,V_max),img_mask); 
+    cv::imshow(WINDOW, img_mask);
+    cv::waitKey(3);
+   
+    // cv::Mat img_blur = img_mask;
+    // cv::medianBlur(img_blur, img_blur, 3);
+    // cv::imshow(WINDOW_NAME_BLUR, img_blur);
+    // cv::waitKey(3);
+
+    cv::findContours(img_mask, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cv::Point(0,0));
+
+    obj_detected = 0;
+    for (int i = 0; i < contours.size(); i++)
+    {
+        ROS_INFO("Loop");
+        cv::approxPolyDP(cv::Mat(contours[i]), approx, cv::arcLength(cv::Mat(contours[i]), true)* 0.01, true);
+        //ROS_INFO("approxPoly");
+
+        
+
+            
+           
+            ROS_INFO("El area teorica es: %f pixels/  %.3f m2", (teoric_size*fx*fy)/(altitude*altitude), teoric_size); //2100cm2?
+            //iterating through each point
+            cv::Point pt;
+            for(int j=0; j<approx.size(); j++){
+                //cv::Point point = approx[i];
+                //ROS_INFO("extracting points X %d Y %d",point.x, point.y);
+
+                if (j == approx.size()-1)
+                {
+                    cv::line(image, approx.at(j), approx.at(0), cv::Scalar(0,255,0), 4);
+                }
+                else
+                {
+                    cv::line(image, approx.at(j), approx.at(j+1), cv::Scalar(0,255,0), 4);
+                }
+            }
+
+            // Centroid extraction----------------------------------------------------------------
+            /// 1º Get the moments
+            cv::Moments m;
+            m = cv::moments( approx, false );
+
+            /// 2º Get the mass centers: (centroid)
+            cv::Point2f mc;
+            mc = cv::Point2f( m.m10/m.m00 , m.m01/m.m00 );
+            cv::line(image, mc, mc, cv::Scalar(255,0,0), 8); // we draw a yellow point for that mc
+
+            /// Pinhole inverse transformation ==> (x,y,z)= f(u,v) without distortion, (u,v)=mc ---------------------
+            ROS_INFO("Centroid location");
+            geometry_msgs::PoseStamped centroid;
+            centroid.header.stamp= ros::Time::now();
+            centroid.header.seq = ros::Time::now().toSec();
+            centroid.header.frame_id = "/image_plane";
+            centroid.pose.orientation.w = 1;
+            centroid.pose.orientation.x = 0;
+            centroid.pose.orientation.y = 0;
+            centroid.pose.orientation.z = 0;
+            centroid.pose.position.x = -((mc.x - cx)*altitude - (T*(mc.y - cy)*altitude)/fy)/fx;
+            centroid.pose.position.y = -((mc.y - cy)*altitude)/fy;
+            centroid.pose.position.z = altitude;
+            ROS_INFO("Centro de masas en pixels del objetivo: (%f , %f)", mc.x, mc.y);
+            ROS_INFO("La posicion del objetivo es: (%f , %f, %f) en metros respecto a la camara", centroid.pose.position.x, centroid.pose.position.y, centroid.pose.position.z);
+
+
+            ROS_INFO("RESULTS");
+            ROS_INFO("imag_obtenidas = %d / veces detectado = %d", images_read, times_detected);
+            ROS_INFO("Falsos negativos = %d", images_read - times_detected + false_positives);
+            ROS_INFO("Falsos positivos = %d \n\n", false_positives);
+
+            summit_position_.publish(centroid);
+        
+
+         /*else{ //boolean para reseteo de juanjo
+             reset_predict.publish(1);
+         }*/
+    }
+
+    cv::imshow(WINDOW_NAME_FINAL, image);
+    cv::waitKey(3);
+
+
+
+    image_pub_.publish(cv_ptr->toImageMsg());
+                                         
+}
+   
+
+int main(int argc, char** argv)
+{
+    ros::init(argc, argv, "summit_detection");
+    Summit_Detection summit_detection;
+    ros::spin();
+    ROS_INFO("summit_detection::main.cpp::No error.");
+    cv::destroyWindow(WINDOW);
+    return 0;
+}

@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+
+<launch>
+	<node pkg="rostopic" type="rostopic" name="despegar" args="pub -1 /ardrone/takeoff std_msgs/Empty"/>
+
+	<node pkg="rostopic" type="rostopic" name="circular" args="pub -1 /p3at/cmd_vel geometry_msgs/Twist '[0.4, 0.0, 0.0]' '[0.0, 0.0, 0.4]'"/>
+
+</launch>

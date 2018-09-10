@@ -1,0 +1,17 @@
+float32 targetSpeedLeft
+float32 currentSpeedLeft
+float32 targetSpeedRight
+float32 currentSpeedRight
+float32 targetSpeedRearLeft
+float32 currentSpeedRearLeft
+float32 targetSpeedRearRight
+float32 currentSpeedRearRight
+float32 encoderLeft
+float32 encoderRight
+float32 encoderRearLeft
+float32 encoderRearRight
+float32 wheelDiff
+float32 wheelBase
+float32 distancePerTick
+bool emergencyPressed
+bool encoderForCalc  # deprecated

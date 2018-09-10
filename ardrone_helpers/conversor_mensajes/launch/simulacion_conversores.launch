@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+
+
+<launch>
+ 
+  <param name="use_sim_time" value="true" />
+
+  <node pkg="conversor_mensajes" type="navdata_a_odometry" name="navdata_a_odometry"/>
+
+  <node pkg="conversor_mensajes" type="sonar_height_a_odometry" name="sonar_height_a_odometry"/>
+
+</launch>

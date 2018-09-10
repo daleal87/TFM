@@ -1,8 +1,0 @@
-<launch>
-    <node pkg="joy" type="joy_node" name="joy_node" output="screen">
-    <param name="autorepeat_rate" value="10" />
-    <param name="dev" value="/dev/input/js0" />
-    </node>
-    <node pkg="ardrone_joystick" type="prueba_control" name="prueba_control" output="screen">
-    </node>
-</launch>

@@ -1,0 +1,11 @@
+<!-- -->
+
+<launch>
+
+  <!-- load the controllers -->
+  <node pkg="rosserial_python" type="serial_node.py" name="serial_node_cable" output="screen">
+	<param name="port" value="/dev/ttyACM0"/>
+	<param name="baud" value="115200"/>
+  </node>
+
+</launch>

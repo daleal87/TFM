@@ -1,0 +1,103 @@
+cable:
+  # Publish all joint states -----------------------------------
+  joint_state_controller:
+    type: joint_state_controller/JointStateController
+    publish_rate: 50  
+
+  # Position Controllers ---------------------------------------
+  joint_tensor_2_position_controller:
+    type: position_controllers/JointPositionController
+    joint: joint_tensor_2
+    pid: {p: 100.0, i: 0.01, d: 10.0}
+  joint_tensor_3_position_controller:
+    type: position_controllers/JointPositionController
+    joint: joint_tensor_3
+    pid: {p: 100.0, i: 0.01, d: 10.0}
+  joint_tensor_4_position_controller:
+    type: position_controllers/JointPositionController
+    joint: joint_tensor_4
+    pid: {p: 100.0, i: 0.01, d: 10.0}
+  joint_tensor_5_position_controller:
+    type: position_controllers/JointPositionController
+    joint: joint_tensor_5
+    pid: {p: 100.0, i: 0.01, d: 10.0}
+  joint_tensor_6_position_controller:
+    type: position_controllers/JointPositionController
+    joint: joint_tensor_6
+    pid: {p: 100.0, i: 0.01, d: 10.0}
+  joint_tensor_7_position_controller:
+    type: position_controllers/JointPositionController
+    joint: joint_tensor_7
+    pid: {p: 100.0, i: 0.01, d: 10.0}
+  joint_tensor_8_position_controller:
+    type: position_controllers/JointPositionController
+    joint: joint_tensor_8
+    pid: {p: 100.0, i: 0.01, d: 10.0}
+  joint_tensor_9_position_controller:
+    type: position_controllers/JointPositionController
+    joint: joint_tensor_9
+    pid: {p: 100.0, i: 0.01, d: 10.0}
+  joint_tensor_10_position_controller:
+    type: position_controllers/JointPositionController
+    joint: joint_tensor_10
+    pid: {p: 100.0, i: 0.01, d: 10.0}
+  joint_tensor_11_position_controller:
+    type: position_controllers/JointPositionController
+    joint: joint_tensor_11
+    pid: {p: 100.0, i: 0.01, d: 10.0}
+  joint_tensor_12_position_controller:
+    type: position_controllers/JointPositionController
+    joint: joint_tensor_12
+    pid: {p: 100.0, i: 0.01, d: 10.0}
+  joint_tensor_13_position_controller:
+    type: position_controllers/JointPositionController
+    joint: joint_tensor_13
+    pid: {p: 100.0, i: 0.01, d: 10.0}
+  joint_tensor_14_position_controller:
+    type: position_controllers/JointPositionController
+    joint: joint_tensor_14
+    pid: {p: 100.0, i: 0.01, d: 10.0}
+  joint_tensor_15_position_controller:
+    type: position_controllers/JointPositionController
+    joint: joint_tensor_15
+    pid: {p: 100.0, i: 0.01, d: 10.0}
+  joint_tensor_16_position_controller:
+    type: position_controllers/JointPositionController
+    joint: joint_tensor_16
+    pid: {p: 100.0, i: 0.01, d: 10.0}
+  joint_tensor_17_position_controller:
+    type: position_controllers/JointPositionController
+    joint: joint_tensor_17
+    pid: {p: 100.0, i: 0.01, d: 10.0}
+  joint_tensor_18_position_controller:
+    type: position_controllers/JointPositionController
+    joint: joint_tensor_18
+    pid: {p: 100.0, i: 0.01, d: 10.0}
+  joint_tensor_19_position_controller:
+    type: position_controllers/JointPositionController
+    joint: joint_tensor_19
+    pid: {p: 100.0, i: 0.01, d: 10.0}
+  joint_tensor_20_position_controller:
+    type: position_controllers/JointPositionController
+    joint: joint_tensor_20
+    pid: {p: 100.0, i: 0.01, d: 10.0}
+  joint_tensor_21_position_controller:
+    type: position_controllers/JointPositionController
+    joint: joint_tensor_21
+    pid: {p: 100.0, i: 0.01, d: 10.0}
+  joint_tensor_22_position_controller:
+    type: position_controllers/JointPositionController
+    joint: joint_tensor_22
+    pid: {p: 100.0, i: 0.01, d: 10.0}
+  joint_tensor_23_position_controller:
+    type: position_controllers/JointPositionController
+    joint: joint_tensor_23
+    pid: {p: 100.0, i: 0.01, d: 10.0}
+  joint_tensor_24_position_controller:
+    type: position_controllers/JointPositionController
+    joint: joint_tensor_24
+    pid: {p: 100.0, i: 0.01, d: 10.0}
+  joint_tensor_25_position_controller:
+    type: position_controllers/JointPositionController
+    joint: joint_tensor_25
+    pid: {p: 100.0, i: 0.01, d: 10.0}

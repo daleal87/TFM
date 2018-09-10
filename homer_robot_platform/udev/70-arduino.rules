@@ -1,0 +1,2 @@
+SUBSYSTEM=="tty", ATTRS{idVendor}=="2a03", ATTRS{serial}!="", SYMLINK+="arduino_$attr{serial}"
+SUBSYSTEM=="tty", ATTRS{idVendor}=="2341", ATTRS{serial}!="", SYMLINK+="arduino_$attr{serial}"

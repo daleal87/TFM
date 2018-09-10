@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+
+
+<launch>
+    <node pkg="joy" type="joy_node" name="joy_node" output="screen">
+    	<param name="autorepeat_rate" value="10" />
+    	<param name="dev" value="/dev/input/js1" />
+    </node>
+    <node pkg="teleop_simulation" type="ard2_joystic" name="ard2_joystick" output="screen"/>
+
+    <!-- <node pkg="control_dual" type="control_pioneer" name="control_pioneer"/> -->
+
+    <node pkg="teleop_simulation" type="rosaria_publisher" name="rosaria_publisher"/>
+
+</launch>

@@ -1,0 +1,7 @@
+digraph G {
+"odom" -> "ÿ"[label="Broadcaster: /complementary_filter_gain_node\nAverage rate: 159.121 Hz\nMost recent transform: 1531470729.953 ( 0.008 sec old)\nBuffer length: 4.946 sec\n"];
+edge [style=invis];
+ subgraph cluster_legend { style=bold; color=black; label ="view_frames Result";
+"Recorded at time: 1531470729.961"[ shape=plaintext ] ;
+ }->"odom";
+}
